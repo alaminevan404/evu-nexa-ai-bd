@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: evu_nexa_postgres
+    restart: always
+    environment:
+      POSTGRES_DB: evu_nexa_db
+      POSTGRES_USER: evu_admin
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-NexaSecurePass2026!}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U evu_admin -d evu_nexa_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: evu_nexa_redis
+    restart: always
+    command: redis-server --requirepass ${REDIS_PASSWORD:-RedisSecurePass2026!} --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-RedisSecurePass2026!}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: evu_nexa_backend
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+asyncpg://evu_admin:${POSTGRES_PASSWORD:-NexaSecurePass2026!}@postgres:5432/evu_nexa_db
+      REDIS_URL: redis://:${REDIS_PASSWORD:-RedisSecurePass2026!}@redis:6379/0
+      SECRET_KEY: ${SECRET_KEY:-EVU_NEXA_SUPER_SECRET_KEY_512_BITS_LONG_HMAC_RSA_2026}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-7000000000:AAFg_DummyTelegramBotTokenForDev}
+    ports:
+      - "8000:8000"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: evu_nexa_frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  redis_data:
