@@ -9,9 +9,7 @@ EVU NEXA AI is a state-of-the-art, high-performance Binary Option & Financial Ma
 - **Security**: Single-gate License Key verification with dynamic SHA-256 WebGL/Canvas Hardware Client Fingerprinting.
 - **Notifications**: Telegram Bot Webhook & HTML Signal Dispatcher (`@et_evu`).
 
-## Seed License Keys
-- **Master Admin Key**: `NEXA-ADMIN-9999-MASTER`
-- **Demo Pro Key**: `NEXA-PRO-89F2-44A1-9B2C`
+
 
 ## Running via Docker Compose
 ```bash
